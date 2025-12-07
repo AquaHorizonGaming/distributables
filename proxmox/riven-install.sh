@@ -94,13 +94,10 @@ else
   git pull --rebase >/dev/null 2>&1 || true
 fi
 cd /riven/src
-$UV_BIN venv /riven/.venv >/dev/null 2>&1 || {
-  msg_error "Failed to create Python virtual environment with uv"
-  exit 1
-}
-$UV_BIN sync --no-dev --frozen >/dev/null 2>&1 || $UV_BIN sync --no-dev >/dev/null 2>&1 || {
-  msg_error "Failed to install Riven backend dependencies with uv"
-  exit 1
+UV_SYSTEM_PYTHON=true $UV_BIN sync --no-dev --frozen >/dev/null 2>&1 || \
+	UV_SYSTEM_PYTHON=true $UV_BIN sync --no-dev >/dev/null 2>&1 || {
+	msg_error "Failed to install Riven backend dependencies with uv (system Python)"
+	exit 1
 }
 chown -R riven:riven /riven
 msg_ok "Installed Riven backend"
@@ -138,8 +135,8 @@ User=riven
 Group=riven
 WorkingDirectory=/riven/src
 EnvironmentFile=/etc/riven/backend.env
-Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
-ExecStart=/usr/local/bin/uv run python src/main.py
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+ExecStart=/usr/bin/python3 src/main.py
 Restart=on-failure
 RestartSec=5
 
