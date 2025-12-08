@@ -17,13 +17,24 @@ update_os
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Determine whether to install the Riven frontend in this container.
+# Default is "yes" unless overridden by the host helper via
+# RIVEN_INSTALL_FRONTEND (values like yes/no/true/false/1/0).
+INSTALL_FRONTEND_RAW="${RIVEN_INSTALL_FRONTEND:-yes}"
+INSTALL_FRONTEND_RAW="$(echo "$INSTALL_FRONTEND_RAW" | tr '[:upper:]' '[:lower:]')"
+if [[ "$INSTALL_FRONTEND_RAW" == "yes" || "$INSTALL_FRONTEND_RAW" == "true" || "$INSTALL_FRONTEND_RAW" == "1" ]]; then
+  INSTALL_FRONTEND="yes"
+else
+  INSTALL_FRONTEND="no"
+fi
+
 msg_info "Installing Dependencies"
 $STD apt-get update
 $STD apt-get install -y \
-	curl sudo mc git ffmpeg vim \
-	python3 python3-venv python3-dev build-essential libffi-dev libpq-dev libfuse3-dev pkg-config \
-	fuse3 libcap2-bin ca-certificates openssl \
-	postgresql postgresql-contrib postgresql-client
+  curl sudo mc git ffmpeg vim \
+  python3 python3-venv python3-dev build-essential libffi-dev libpq-dev libfuse3-dev pkg-config \
+  fuse3 libcap2-bin ca-certificates openssl \
+  postgresql postgresql-contrib postgresql-client
 msg_ok "Installed Dependencies"
 
 msg_info "Configuring FUSE"
@@ -37,17 +48,22 @@ if [ -n "$PY_BIN" ]; then
 fi
 msg_ok "Configured Python capabilities"
 
-msg_info "Installing Node.js (24.x) and pnpm"
-curl -fsSL https://deb.nodesource.com/setup_24.x | bash - >/dev/null 2>&1 || {
-	msg_error "Failed to configure NodeSource repository for Node.js"
-	exit 1
-}
-$STD apt-get install -y nodejs
-npm install -g pnpm >/dev/null 2>&1 || {
-	msg_error "Failed to install pnpm globally"
-	exit 1
-}
-msg_ok "Installed Node.js and pnpm"
+if [ "$INSTALL_FRONTEND" = "yes" ]; then
+  msg_info "Installing Node.js (24.x) and pnpm"
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - >/dev/null 2>&1 || {
+    msg_error "Failed to configure NodeSource repository for Node.js"
+    exit 1
+  }
+  $STD apt-get install -y nodejs
+  npm install -g pnpm >/dev/null 2>&1 || {
+    msg_error "Failed to install pnpm globally"
+    exit 1
+  }
+  msg_ok "Installed Node.js and pnpm"
+else
+  msg_info "Skipping Node.js/pnpm install (frontend disabled)"
+  msg_ok "Frontend components will not be installed in this container"
+fi
 
 msg_info "Configuring PostgreSQL"
 $STD systemctl enable postgresql
@@ -64,8 +80,14 @@ if ! id -u riven >/dev/null 2>&1; then
 fi
 
 # Core application directories
-mkdir -p /riven /riven/data /mount /mnt/riven /opt/riven-frontend /etc/riven
-chown -R riven:riven /riven /riven/data /mount /mnt/riven /opt/riven-frontend
+mkdir -p /riven /riven/data /mount /mnt/riven /etc/riven
+if [ "$INSTALL_FRONTEND" = "yes" ]; then
+  mkdir -p /opt/riven-frontend
+fi
+chown -R riven:riven /riven /riven/data /mount /mnt/riven
+if [ "$INSTALL_FRONTEND" = "yes" ]; then
+  chown -R riven:riven /opt/riven-frontend
+fi
 
 # Make the library-related mountpoints world-readable so media from other
 # containers (e.g. Plex/Jellyfin/Emby) can be shared via /mnt/riven.
@@ -179,65 +201,66 @@ $STD systemctl enable riven-backend.service
 $STD systemctl restart riven-backend.service
 msg_ok "Created systemd service for Riven backend"
 
-msg_info "Installing Riven frontend"
-if [ ! -d /opt/riven-frontend/.git ]; then
-  rm -rf /opt/riven-frontend
-  git clone https://github.com/rivenmedia/riven-frontend.git /opt/riven-frontend >/dev/null 2>&1 || {
-    msg_error "Failed to clone Riven frontend repository"
-    exit 1
-  }
-else
-  cd /opt/riven-frontend
-  git pull --rebase >/dev/null 2>&1 || true
-fi
-cd /opt/riven-frontend
-	if command -v pnpm >/dev/null 2>&1; then
-	  if ! pnpm install >/dev/null 2>&1; then
-	    msg_error "pnpm install failed while installing Riven frontend"
-	    exit 1
-	  fi
-	  if ! pnpm run build >/dev/null 2>&1; then
-	    msg_error "pnpm run build failed while building Riven frontend"
-	    exit 1
-	  fi
-	  pnpm prune --prod >/dev/null 2>&1 || true
-	else
-	  msg_error "pnpm is not available; cannot build Riven frontend"
-	  exit 1
-	fi
-chown -R riven:riven /opt/riven-frontend
-msg_ok "Installed Riven frontend"
-
-msg_info "Configuring Riven frontend environment"
-AUTH_SECRET=$(openssl rand -base64 32)
-
-# If the host script provided a specific origin (e.g. a reverse proxy URL), use it.
-# Otherwise, fall back to auto-detecting the CT's primary IPv4 and using :3000.
-if [ -n "${RIVEN_FRONTEND_ORIGIN:-}" ]; then
-  FRONTEND_ORIGIN_DEFAULT="$RIVEN_FRONTEND_ORIGIN"
-else
-  CT_IP=$(ip -4 -o addr show scope global 2>/dev/null | awk 'NR==1{print $4}' | cut -d/ -f1)
-  if [ -z "$CT_IP" ]; then
-    CT_IP="127.0.0.1"
+if [ "$INSTALL_FRONTEND" = "yes" ]; then
+  msg_info "Installing Riven frontend"
+  if [ ! -d /opt/riven-frontend/.git ]; then
+    rm -rf /opt/riven-frontend
+    git clone https://github.com/rivenmedia/riven-frontend.git /opt/riven-frontend >/dev/null 2>&1 || {
+      msg_error "Failed to clone Riven frontend repository"
+      exit 1
+    }
+  else
+    cd /opt/riven-frontend
+    git pull --rebase >/dev/null 2>&1 || true
   fi
-  FRONTEND_ORIGIN_DEFAULT="http://$CT_IP:3000"
-fi
+  cd /opt/riven-frontend
+  if command -v pnpm >/dev/null 2>&1; then
+    if ! pnpm install >/dev/null 2>&1; then
+      msg_error "pnpm install failed while installing Riven frontend"
+      exit 1
+    fi
+    if ! pnpm run build >/dev/null 2>&1; then
+      msg_error "pnpm run build failed while building Riven frontend"
+      exit 1
+    fi
+    pnpm prune --prod >/dev/null 2>&1 || true
+  else
+    msg_error "pnpm is not available; cannot build Riven frontend"
+    exit 1
+  fi
+  chown -R riven:riven /opt/riven-frontend
+  msg_ok "Installed Riven frontend"
 
-if [ ! -f "$FRONTEND_ENV" ]; then
-  cat <<EOF >"$FRONTEND_ENV"
+  msg_info "Configuring Riven frontend environment"
+  AUTH_SECRET=$(openssl rand -base64 32)
+
+  # If the host script provided a specific origin (e.g. a reverse proxy URL), use it.
+  # Otherwise, fall back to auto-detecting the CT's primary IPv4 and using :3000.
+  if [ -n "${RIVEN_FRONTEND_ORIGIN:-}" ]; then
+    FRONTEND_ORIGIN_DEFAULT="$RIVEN_FRONTEND_ORIGIN"
+  else
+    CT_IP=$(ip -4 -o addr show scope global 2>/dev/null | awk 'NR==1{print $4}' | cut -d/ -f1)
+    if [ -z "$CT_IP" ]; then
+      CT_IP="127.0.0.1"
+    fi
+    FRONTEND_ORIGIN_DEFAULT="http://$CT_IP:3000"
+  fi
+
+  if [ ! -f "$FRONTEND_ENV" ]; then
+    cat <<EOF >"$FRONTEND_ENV"
 DATABASE_URL=/riven/data/riven.db
 BACKEND_URL=http://127.0.0.1:8080
 BACKEND_API_KEY=$RIVEN_API_KEY
 AUTH_SECRET=$AUTH_SECRET
 ORIGIN=$FRONTEND_ORIGIN_DEFAULT
 EOF
-  chown root:root "$FRONTEND_ENV"
-  chmod 600 "$FRONTEND_ENV"
-fi
-msg_ok "Configured Riven frontend environment"
+    chown root:root "$FRONTEND_ENV"
+    chmod 600 "$FRONTEND_ENV"
+  fi
+  msg_ok "Configured Riven frontend environment"
 
-msg_info "Creating systemd service for Riven frontend"
-cat <<'EOF' >/etc/systemd/system/riven-frontend.service
+  msg_info "Creating systemd service for Riven frontend"
+  cat <<'EOF' >/etc/systemd/system/riven-frontend.service
 [Unit]
 Description=Riven Frontend
 After=network-online.target riven-backend.service
@@ -257,10 +280,14 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-$STD systemctl enable riven-frontend.service
-$STD systemctl restart riven-frontend.service
-msg_ok "Created systemd service for Riven frontend"
+  systemctl daemon-reload
+  $STD systemctl enable riven-frontend.service
+  $STD systemctl restart riven-frontend.service
+  msg_ok "Created systemd service for Riven frontend"
+else
+  msg_info "Skipping Riven frontend installation (disabled via installer)"
+  msg_ok "Only the Riven backend API was installed in this container"
+fi
 
 motd_ssh
 customize

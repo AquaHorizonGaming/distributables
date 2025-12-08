@@ -453,19 +453,36 @@ advanced_settings() {
     exit-script
   fi
 
-	# Optional: allow user to specify the external frontend URL / origin.
-	# If left blank, the installer will auto-detect and use http://<CT-IP>:3000.
-	if RIVEN_FRONTEND_ORIGIN=$(whiptail --backtitle "Proxmox VE Helper Scripts" \
-	  --inputbox "Set the external URL you'll use to access the Riven frontend (ORIGIN).\n\nExamples:\n  http://<ct-ip>:3000\n  https://riven.example.com\n\nLeave blank to auto-detect using the CT IP on port 3000." \
-	  15 78 --title "RIVEN FRONTEND ORIGIN" 3>&1 1>&2 2>&3); then
-	  if [ -n "$RIVEN_FRONTEND_ORIGIN" ]; then
-	    echo -e "${DGN}Using Frontend Origin: ${BGN}$RIVEN_FRONTEND_ORIGIN${CL}"
+	  # Ask whether to install and host the Riven frontend in this container.
+	  # If disabled, only the backend API will be installed here and you can
+	  # host the frontend elsewhere.
+	  if (whiptail --backtitle "Proxmox VE Helper Scripts" \
+	    --title "RIVEN FRONTEND" \
+	    --yesno "Install and host the Riven frontend in this container?\n\nIf you select No, only the backend API will be installed here. You can host the frontend on another machine or container." \
+	    12 78); then
+	    RIVEN_INSTALL_FRONTEND="yes"
 	  else
-	    echo -e "${DGN}Using Frontend Origin: ${BGN}Auto-detect (CT IP:3000)${CL}"
+	    RIVEN_INSTALL_FRONTEND="no"
 	  fi
-	else
-	  exit-script
-	fi
+	  echo -e "${DGN}Install frontend in this CT: ${BGN}$RIVEN_INSTALL_FRONTEND${CL}"
+
+	  # Optional: allow user to specify the external frontend URL / origin.
+	  # If left blank, the installer will auto-detect and use http://<CT-IP>:3000.
+	  if [ "$RIVEN_INSTALL_FRONTEND" != "no" ]; then
+	    if RIVEN_FRONTEND_ORIGIN=$(whiptail --backtitle "Proxmox VE Helper Scripts" \
+	      --inputbox "Set the external URL you'll use to access the Riven frontend (ORIGIN).\n\nExamples:\n  http://<ct-ip>:3000\n  https://riven.example.com\n\nLeave blank to auto-detect using the CT IP on port 3000." \
+	      15 78 --title "RIVEN FRONTEND ORIGIN" 3>&1 1>&2 2>&3); then
+	      if [ -n "$RIVEN_FRONTEND_ORIGIN" ]; then
+	        echo -e "${DGN}Using Frontend Origin: ${BGN}$RIVEN_FRONTEND_ORIGIN${CL}"
+	      else
+	        echo -e "${DGN}Using Frontend Origin: ${BGN}Auto-detect (CT IP:3000)${CL}"
+	      fi
+	    else
+	      exit-script
+	    fi
+	  else
+	    RIVEN_FRONTEND_ORIGIN=""
+	  fi
 
   if [[ "$PW" == -password* ]]; then
     if (whiptail --backtitle "Proxmox VE Helper Scripts" --defaultno --title "SSH ACCESS" --yesno "Enable Root SSH Access?" 10 58); then
@@ -572,6 +589,7 @@ build_container() {
   export VERBOSE="$VERB"
   export SSH_ROOT="${SSH}"
   export RIVEN_FRONTEND_ORIGIN
+  export RIVEN_INSTALL_FRONTEND
   export CTID="$CT_ID"
   export CTTYPE="$CT_TYPE"
   export PCT_OSTYPE="$var_os"

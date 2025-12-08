@@ -40,28 +40,29 @@ color
 catch_errors
 
 function default_settings() {
-  CT_TYPE="1"
-  PW=""
-  CT_ID=$NEXTID
-  HN=$NSAPP
-  DISK_SIZE="$var_disk"
-  CORE_COUNT="$var_cpu"
-  RAM_SIZE="$var_ram"
-  BRG="vmbr0"
-  NET="dhcp"
-  GATE=""
-  APT_CACHER=""
-  APT_CACHER_IP=""
-  DISABLEIP6="no"
-  MTU=""
-  SD=""
-  NS=""
-  MAC=""
-  VLAN=""
-  SSH="no"
-  VERB="no"
-  RIVEN_FRONTEND_ORIGIN=""
-  echo_default
+	CT_TYPE="1"
+	PW=""
+	CT_ID=$NEXTID
+	HN=$NSAPP
+	DISK_SIZE="$var_disk"
+	CORE_COUNT="$var_cpu"
+	RAM_SIZE="$var_ram"
+	BRG="vmbr0"
+	NET="dhcp"
+	GATE=""
+	APT_CACHER=""
+	APT_CACHER_IP=""
+	DISABLEIP6="no"
+	MTU=""
+	SD=""
+	NS=""
+	MAC=""
+	VLAN=""
+	SSH="no"
+	VERB="no"
+	RIVEN_INSTALL_FRONTEND="yes"
+	RIVEN_FRONTEND_ORIGIN=""
+	echo_default
 }
 
 function update_script() {
@@ -75,7 +76,11 @@ description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${APP} backend should be reachable at:  ${BL}http://<CT-IP>:8080/scalar${CL}"
-echo -e "${APP} frontend should be reachable at: ${BL}http://<CT-IP>:3000${CL}\n\n"
+if [ "${RIVEN_INSTALL_FRONTEND:-yes}" != "no" ]; then
+	echo -e "${APP} frontend should be reachable at: ${BL}http://<CT-IP>:3000${CL}\n"
+else
+	echo -e "${APP} frontend was ${RD}not installed${CL} in this container. You can host it elsewhere and point it at the backend URL above.\n"
+fi
 echo -e "To edit the backend settings directly, they are accessible at ${BL}/riven/src/data/settings.json${CL}\n"
 
 echo -e "To share a host media directory with this Riven container, run on the Proxmox host:"
