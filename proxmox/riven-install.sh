@@ -356,7 +356,7 @@ User=riven
 Group=riven
 WorkingDirectory=/opt/riven-frontend
 EnvironmentFile=/etc/riven/frontend.env
-ExecStart=/usr/bin/node /opt/riven-frontend/build
+ExecStart=ORIGIN=${ORIGIN} /usr/bin/node /opt/riven-frontend/build
 Restart=on-failure
 RestartSec=5
 
