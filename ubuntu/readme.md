@@ -1,3 +1,5 @@
+## ▶️ How to run the installer (Ubuntu Script)
+
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
 ```
