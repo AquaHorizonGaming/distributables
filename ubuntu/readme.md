@@ -1,6 +1,6 @@
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
-
+```
 # Riven Ubuntu Installer
 
 This script installs and configures Riven on Ubuntu using Docker and Docker Compose.
@@ -87,4 +87,4 @@ Restart everything:
 
 View backend logs:
 - docker logs riven
-```
+
