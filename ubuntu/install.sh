@@ -2,14 +2,14 @@
 set -euo pipefail
 
 ############################################
-# USER CONFIG (EDIT THESE)
+# CONFIG
 ############################################
 DOWNLOAD_DIR="/opt/riven"
-COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distributables/refs/heads/main/ubuntu/docker-compose.yml"
+COMPOSE_URL="https://example.com/docker-compose.yml"
 ENV_FILE=".env"
 
 ############################################
-# COLORS / OUTPUT
+# OUTPUT
 ############################################
 GREEN="\033[1;32m"
 RED="\033[1;31m"
@@ -32,37 +32,55 @@ err()  { echo -e "${RED}[✖]${NC} $1"; exit 1; }
 [[ "$ID" == "ubuntu" ]] || err "Ubuntu required"
 
 ############################################
-# BASE DEPS
+# DEPENDENCY CHECK
 ############################################
-step "Installing base dependencies (curl, ca-certificates, gnupg)"
-
-apt-get update
-apt-get install -y \
-  ca-certificates \
-  curl \
-  gnupg \
-  lsb-release \
+REQUIRED_PKGS=(
+  curl
+  ca-certificates
+  gnupg
+  lsb-release
   openssl
+)
+
+MISSING_PKGS=()
+
+for pkg in "${REQUIRED_PKGS[@]}"; do
+  if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+    MISSING_PKGS+=("$pkg")
+  fi
+done
+
+if (( ${#MISSING_PKGS[@]} > 0 )); then
+  step "Installing missing dependencies: ${MISSING_PKGS[*]}"
+  apt-get update
+  apt-get install -y "${MISSING_PKGS[@]}"
+else
+  log "All base dependencies already installed"
+fi
 
 ############################################
-# TIMEZONE
+# TIMEZONE (NON-INTERACTIVE SAFE)
 ############################################
 step "Detecting timezone"
 
 DEFAULT_TZ="$(timedatectl show --property=Timezone --value 2>/dev/null || true)"
 DEFAULT_TZ="${DEFAULT_TZ:-UTC}"
 
-echo
-echo -e "Detected timezone: ${GREEN}$DEFAULT_TZ${NC}"
-read -rp "Press ENTER to accept or type another (e.g. America/New_York): " USER_TZ
-TZ_SELECTED="${USER_TZ:-$DEFAULT_TZ}"
+if [[ ! -t 0 ]]; then
+  TZ_SELECTED="$DEFAULT_TZ"
+  log "Non-interactive install — using timezone: $TZ_SELECTED"
+else
+  echo
+  echo -e "Detected timezone: ${GREEN}$DEFAULT_TZ${NC}"
+  read -rp "Press ENTER to accept or type another: " USER_TZ
+  TZ_SELECTED="${USER_TZ:-$DEFAULT_TZ}"
+fi
 
-timedatectl list-timezones | grep -qx "$TZ_SELECTED" || err "Invalid timezone"
 timedatectl set-timezone "$TZ_SELECTED"
 log "Timezone set to $TZ_SELECTED"
 
 ############################################
-# DIRECTORY SETUP
+# DOWNLOAD DIRECTORY
 ############################################
 step "Preparing download directory"
 
@@ -70,14 +88,15 @@ mkdir -p "$DOWNLOAD_DIR"
 cd "$DOWNLOAD_DIR"
 
 ############################################
-# DOWNLOAD FILES
+# DOWNLOAD COMPOSE
 ############################################
 step "Downloading docker-compose.yml"
 
-curl -fsSL "$COMPOSE_URL" -o docker-compose.yml || err "Failed to download compose file"
+curl -fsSL "$COMPOSE_URL" -o docker-compose.yml \
+  || err "Failed to download docker-compose.yml"
 
 ############################################
-# ENV GENERATION
+# ENV FILE GENERATION
 ############################################
 if [[ ! -f "$ENV_FILE" ]]; then
   step "Generating .env"
@@ -107,8 +126,9 @@ fi
 ############################################
 step "Installing Docker if missing"
 
-if ! command -v docker &>/dev/null; then
+if ! command -v docker >/dev/null 2>&1; then
   install -m 0755 -d /etc/apt/keyrings
+
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
     | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   chmod a+r /etc/apt/keyrings/docker.gpg
@@ -130,7 +150,7 @@ else
 fi
 
 ############################################
-# MOUNT DIRECTORIES
+# MOUNTS
 ############################################
 step "Creating mount directories"
 
@@ -138,7 +158,7 @@ mkdir -p /mnt/riven/backend /mnt/riven/mount /mnt/jellyfin /mnt/plex /mnt/emby
 chown -R 1000:1000 /mnt/riven /mnt/jellyfin /mnt/plex /mnt/emby
 
 ############################################
-# SYSTEMD MOUNT SERVICE
+# SYSTEMD SHARED MOUNT
 ############################################
 step "Configuring shared mount systemd service"
 
@@ -170,7 +190,7 @@ findmnt -T /mnt/riven/mount -o PROPAGATION | grep -q shared \
   || err "Mount is NOT shared"
 
 ############################################
-# START DOCKER + STACK
+# START STACK
 ############################################
 step "Starting Docker"
 systemctl start docker
@@ -183,6 +203,6 @@ docker compose up -d
 # DONE
 ############################################
 log "Riven installed successfully"
-log "Compose location: $DOWNLOAD_DIR/docker-compose.yml"
-log "Env file: $DOWNLOAD_DIR/.env"
 log "Timezone: $TZ_SELECTED"
+log "Compose: $DOWNLOAD_DIR/docker-compose.yml"
+log "Env: $DOWNLOAD_DIR/.env"
