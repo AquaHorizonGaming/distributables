@@ -149,8 +149,6 @@ services:
     restart: unless-stopped
     ports:
       - "8096:8096"
-    devices:
-      - /dev/dri:/dev/dri
     environment:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
@@ -166,8 +164,6 @@ services:
     restart: unless-stopped
     ports:
       - "32400:32400"
-    devices:
-      - /dev/dri:/dev/dri
     environment:
       PUID: 1000
       PGID: 1000
@@ -186,8 +182,6 @@ services:
     restart: unless-stopped
     ports:
       - "8097:8096"
-    devices:
-      - /dev/dri:/dev/dri
     environment:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
