@@ -45,7 +45,7 @@ This installer handles:
 - Riven service preparation and directory layout
 
 Full Ubuntu documentation:
-- [`ubuntu/README.md`](ubuntu/README.md)
+- [`ubuntu/readme.md`](ubuntu/readme.md)
 
 ---
 
