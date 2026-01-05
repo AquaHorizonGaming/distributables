@@ -16,6 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks: [media]
 
   riven:
     image: spoked/riven:dev
@@ -48,11 +49,7 @@ services:
     depends_on:
       riven-db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:8080 >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
+    networks: [media]
 
   riven-frontend:
     image: spoked/riven-frontend:dev
@@ -63,7 +60,6 @@ services:
     env_file: [.env]
     environment:
       TZ: ${TZ}
-      DATABASE_URL: /riven/data/riven.db
       BACKEND_URL: http://riven:8080
       BACKEND_API_KEY: ${BACKEND_API_KEY}
       AUTH_SECRET: ${AUTH_SECRET}
@@ -73,11 +69,7 @@ services:
     depends_on:
       riven:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:3000 >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    networks: [media]
 
   jellyfin:
     image: jellyfin/jellyfin
@@ -88,25 +80,33 @@ services:
       - "8096:8096"
     devices:
       - /dev/dri:/dev/dri
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/jellyfin:/config
+    networks: [media]
 
   plex:
     image: lscr.io/linuxserver/plex
     container_name: plex
     profiles: ["plex"]
     restart: unless-stopped
-    network_mode: host
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - VERSION=docker
+    ports:
+      - "32400:32400"
     devices:
       - /dev/dri:/dev/dri
+    environment:
+      PUID: 1000
+      PGID: 1000
+      VERSION: docker
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/plex:/config
+    networks: [media]
 
   emby:
     image: emby/embyserver
@@ -117,10 +117,19 @@ services:
       - "8097:8096"
     devices:
       - /dev/dri:/dev/dri
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/emby:/config
+    networks: [media]
 
 volumes:
   riven-frontend-data:
   riven-pg-data:
+
+networks:
+  media:
+    name: media
+    driver: bridge
