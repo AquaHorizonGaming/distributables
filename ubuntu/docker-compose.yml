@@ -155,7 +155,9 @@ services:
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/jellyfin:/config
-    networks: [media]
+    networks:
+      - media
+      - bridge
 
   plex:
     image: lscr.io/linuxserver/plex
@@ -173,7 +175,9 @@ services:
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/plex:/config
-    networks: [media]
+    networks:
+      - media
+      - bridge
 
   emby:
     image: emby/embyserver
@@ -188,7 +192,9 @@ services:
     volumes:
       - /mnt/riven/mount:/media:ro
       - /mnt/emby:/config
-    networks: [media]
+    networks:
+      - media
+      - bridge
 
 volumes:
   riven-frontend-data:
@@ -198,3 +204,6 @@ networks:
   media:
     name: media
     driver: bridge
+  bridge:
+    external: true
+    name: bridge
