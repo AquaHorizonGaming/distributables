@@ -1,4 +1,4 @@
-# Riven Distributables
+# Riven Scripts
 
 This repository contains official helper scripts and installers for deploying
 **Riven** on supported platforms.
