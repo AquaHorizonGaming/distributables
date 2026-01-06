@@ -10,7 +10,7 @@ It is designed to be **safe, repeatable, and beginner-proof**, while still suppo
 Run this **directly on the Proxmox host shell**:
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/proxmox/install.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/Riven-Scripts/main/proxmox/install.sh)"
 ```
 
 The installer is fully interactive and will guide you through all required selections.
