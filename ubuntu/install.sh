@@ -7,7 +7,7 @@ set -euo pipefail
 INSTALL_DIR="/opt/riven"
 BACKEND_PATH="/mnt/riven/backend"
 MOUNT_PATH="/mnt/riven/mount"
-COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/docker-compose.yml"
+COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/Riven-Scripts/main/ubuntu/docker-compose.yml"
 DEFAULT_ORIGIN="http://localhost:3000"
 
 ############################################
