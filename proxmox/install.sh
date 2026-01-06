@@ -127,7 +127,7 @@ echo "== Riven Proxmox LXC (Docker) Installer =="
 ###############################################################################
 # Download LXC installer components from GitHub
 ###############################################################################
-BASE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/proxmox/lxc"
+BASE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/Riven-Scripts/main/proxmox/lxc"
 WORKDIR="/tmp/riven-proxmox-lxc"
 
 echo "📥 Downloading installer components from GitHub..."
