@@ -16,7 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks: [media]
+    networks:
+      - media
 
   riven:
     image: spoked/riven:dev
@@ -32,9 +33,7 @@ services:
       - apparmor:unconfined
     devices:
       - /dev/fuse
-
     env_file: [.env]
-
     environment:
       # =========================
       # CORE / RUNTIME
@@ -117,10 +116,21 @@ services:
     volumes:
       - /mnt/riven/backend:/riven/data
       - /mnt/riven/mount:/mount:rshared,z
+
     depends_on:
       riven-db:
         condition: service_healthy
-    networks: [media]
+
+    healthcheck:
+      # TCP check avoids dependency on HTTP internals
+      test: ["CMD-SHELL", "nc -z localhost 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+    networks:
+      - media
 
   riven-frontend:
     image: spoked/riven-frontend:dev
@@ -140,58 +150,8 @@ services:
     depends_on:
       riven:
         condition: service_healthy
-    networks: [media]
-
-  jellyfin:
-    image: jellyfin/jellyfin
-    container_name: jellyfin
-    profiles: ["jellyfin"]
-    restart: unless-stopped
-    ports:
-      - "8096:8096"
-    environment:
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
-    volumes:
-      - /mnt/riven/mount:/media:ro
-      - /mnt/jellyfin:/config
-    networks: [media]
-
-
-  plex:
-    image: lscr.io/linuxserver/plex
-    container_name: plex
-    profiles: ["plex"]
-    restart: unless-stopped
-    ports:
-      - "32400:32400"
-    environment:
-      PUID: 1000
-      PGID: 1000
-      VERSION: docker
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
-    volumes:
-      - /mnt/riven/mount:/media:ro
-      - /mnt/plex:/config
-    networks: [media]
-
-
-  emby:
-    image: emby/embyserver
-    container_name: emby
-    profiles: ["emby"]
-    restart: unless-stopped
-    ports:
-      - "8097:8096"
-    environment:
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
-    volumes:
-      - /mnt/riven/mount:/media:ro
-      - /mnt/emby:/config
-    networks: [media]
-
+    networks:
+      - media
 
 volumes:
   riven-frontend-data:
