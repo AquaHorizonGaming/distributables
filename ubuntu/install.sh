@@ -284,6 +284,7 @@ case "$MEDIA_PROFILE" in
     ;;
 esac
 
+
 ############################################
 # WRITE .env (ONCE, NO SED)
 ############################################
@@ -330,6 +331,46 @@ RIVEN_SCRAPING_PROWLARR_ENABLED="$RIVEN_SCRAPING_PROWLARR_ENABLED"
 RIVEN_SCRAPING_PROWLARR_URL="$RIVEN_SCRAPING_PROWLARR_URL"
 RIVEN_SCRAPING_PROWLARR_API_KEY="$RIVEN_SCRAPING_PROWLARR_API_KEY"
 EOF
+
+############################################
+# FIX BROKEN MULTILINE ENV VALUES
+############################################
+banner "Fixing .env formatting issues"
+
+awk '
+  BEGIN { key=""; val="" }
+  {
+    # If we are currently accumulating a broken value
+    if (key != "") {
+      val = val $0
+      if ($0 ~ /"$/) {
+        gsub(/\n/, "", val)
+        sub(/"$/, "", val)
+        print key "\"" val "\""
+        key=""
+        val=""
+      }
+      next
+    }
+
+    # Detect start of broken quoted value
+    if ($0 ~ /^[A-Z0-9_]+="$/) {
+      split($0, a, "=")
+      key = a[1] "="
+      val = ""
+      next
+    }
+
+    # Normal line
+    print
+  }
+' .env > .env.fixed
+
+mv .env.fixed .env
+chmod 600 .env
+
+ok ".env repaired and sanitized"
+
 
 ############################################
 # START RIVEN
