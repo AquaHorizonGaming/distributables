@@ -119,16 +119,8 @@ services:
 
     depends_on:
       riven-db:
-        condition: service_healthy
-
-    healthcheck:
-      # TCP check avoids dependency on HTTP internals
-      test: ["CMD-SHELL", "nc -z localhost 8080"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-
+        condition: service_healthy 
+        
     networks:
       - media
 
