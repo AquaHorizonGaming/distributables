@@ -309,8 +309,8 @@ esac
 # SECRETS
 ############################################
 POSTGRES_PASSWORD="$(openssl rand -hex 24)"
-BACKEND_API_KEY="$(openssl rand -hex 32)"
-AUTH_SECRET="$(openssl rand -hex 32)"
+BACKEND_API_KEY="$(openssl rand -hex 16)"
+AUTH_SECRET="$(openssl rand -base64 32)"
 
 ############################################
 # MEDIA UPDATER FLAGS
