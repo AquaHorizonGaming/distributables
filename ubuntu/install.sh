@@ -82,13 +82,53 @@ if ! command -v docker >/dev/null; then
 fi
 ok "Docker ready"
 
+
+############################################
+# USER / UID / GID DETECTION
+############################################
+detect_uid_gid() {
+  # Prefer the sudo user if present
+  if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+    TARGET_UID="$(id -u "$SUDO_USER")"
+    TARGET_GID="$(id -g "$SUDO_USER")"
+    return
+  fi
+
+  # Fallback: first non-root user with UID >= 1000
+  local user
+  user="$(awk -F: '$3>=1000 && $3<65534 {print $1; exit}' /etc/passwd)"
+
+  if [[ -n "$user" ]]; then
+    TARGET_UID="$(id -u "$user")"
+    TARGET_GID="$(id -g "$user")"
+    return
+  fi
+
+  # Absolute fallback
+  TARGET_UID=1000
+  TARGET_GID=1000
+}
+
+detect_uid_gid
+
+ok "Detected user ownership: UID=$TARGET_UID GID=$TARGET_GID"
+
+
 ############################################
 # FILESYSTEM
 ############################################
 banner "Filesystem"
+
 mkdir -p "$BACKEND_PATH" "$MOUNT_PATH" "$INSTALL_DIR"
-chown -R "${SUDO_USER:-1000}:${SUDO_USER:-1000}" /mnt/riven
-ok "Filesystem ready"
+
+chown "$TARGET_UID:$TARGET_GID" "$BACKEND_PATH" "$MOUNT_PATH" \
+  || fail "Failed to chown backend or mount path"
+
+chown "$TARGET_UID:$TARGET_GID" "$INSTALL_DIR" \
+  || fail "Failed to chown install dir"
+
+ok "Filesystem ready (owner: $TARGET_UID:$TARGET_GID)"
+
 
 ############################################
 # DOWNLOAD COMPOSE FILES FIRST
