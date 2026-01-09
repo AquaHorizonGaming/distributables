@@ -302,12 +302,17 @@ read -rp "Using reverse proxy? (y/N): " USE_PROXY
 ok "ORIGIN=$ORIGIN"
 
 ############################################
-# DOWNLOADER
+# DOWNLOADER SELECTION (REQUIRED)
 ############################################
 banner "Downloader Selection (REQUIRED)"
+
+echo "Choose ONE downloader service:"
+echo
 echo "1) Real-Debrid"
 echo "2) All-Debrid"
 echo "3) Debrid-Link"
+echo
+
 read -rp "Select ONE: " DL_SEL
 
 RIVEN_DOWNLOADERS_REAL_DEBRID_ENABLED=false
@@ -321,18 +326,39 @@ RIVEN_DOWNLOADERS_DEBRID_LINK_API_KEY=""
 case "$DL_SEL" in
   1)
     RIVEN_DOWNLOADERS_REAL_DEBRID_ENABLED=true
-    RIVEN_DOWNLOADERS_REAL_DEBRID_API_KEY="$(require_non_empty "Real-Debrid API Key")"
+    echo
+    echo "Real-Debrid API Token required."
+    echo
+    echo "How to get it:"
+    echo "  1) Visit https://real-debrid.com/apitoken"
+    echo "  2) Copy the API Token shown"
+    echo
+    RIVEN_DOWNLOADERS_REAL_DEBRID_API_KEY="$(require_non_empty "Enter Real-Debrid API Token")"
     ;;
   2)
     RIVEN_DOWNLOADERS_ALL_DEBRID_ENABLED=true
-    RIVEN_DOWNLOADERS_ALL_DEBRID_API_KEY="$(require_non_empty "All-Debrid API Key")"
+    echo
+    echo "All-Debrid API Key required."
+    echo
+    echo "How to get it:"
+    echo "  1) Visit https://alldebrid.com/apikeys"
+    echo "  2) Generate or copy an existing key"
+    echo
+    RIVEN_DOWNLOADERS_ALL_DEBRID_API_KEY="$(require_non_empty "Enter All-Debrid API Key")"
     ;;
   3)
     RIVEN_DOWNLOADERS_DEBRID_LINK_ENABLED=true
-    RIVEN_DOWNLOADERS_DEBRID_LINK_API_KEY="$(require_non_empty "Debrid-Link API Key")"
+    echo
+    echo "Debrid-Link API Key required."
+    echo
+    echo "How to get it:"
+    echo "  1) Visit https://debrid-link.com/webapp/apikey"
+    echo "  2) Copy your API key"
+    echo
+    RIVEN_DOWNLOADERS_DEBRID_LINK_API_KEY="$(require_non_empty "Enter Debrid-Link API Key")"
     ;;
   *)
-    fail "Downloader REQUIRED"
+    fail "Downloader selection REQUIRED"
     ;;
 esac
 
