@@ -1,3 +1,10 @@
+## 📚 Table of Contents
+
+- [Install Riven](#-riven-ubuntu-installer)
+- [Update Riven](#-riven-ubuntu-updater)
+- [Uninstall Riven](#-riven-ubuntu-uninstaller)
+
+
 ## ▶️ How to run the installer (Ubuntu Script)
 
 Run this command on Ubuntu:
@@ -160,5 +167,22 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/d
 > Docker itself is **preserved by default** (you will be prompted).
 
 
+## 🔁 Riven Ubuntu Updater
 
+This command updates **Riven** to the latest available Docker images and optionally updates the configured **media server**.
+
+The updater is **safe by default** and does **not** remove:
+- Volumes
+- Bind mounts
+- Configuration files
+- `.env`
+- Media libraries
+
+---
+
+### ▶️ Run this command on Ubuntu
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/riven-update.sh)"
+```
 
