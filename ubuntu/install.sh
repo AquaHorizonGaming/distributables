@@ -7,6 +7,7 @@ set -euo pipefail
 INSTALL_DIR="/opt/riven"
 BACKEND_PATH="/mnt/riven/backend"
 MOUNT_PATH="/mnt/riven/mount"
+LOG_DIR="/tmp/logs/riven"
 
 MEDIA_COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/docker-compose.media.yml"
 RIVEN_COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/docker-compose.yml"
@@ -54,6 +55,28 @@ sanitize() {
 # ROOT CHECK
 ############################################
 [[ "$(id -u)" -eq 0 ]] || fail "Run with sudo"
+
+############################################
+# LOGGING MODULE
+############################################
+
+LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
+
+mkdir -p "$LOG_DIR"
+touch "$LOG_FILE"
+
+# Mirror stdout + stderr to terminal AND log
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+log()        { echo "[INFO]  $*"; }
+log_warn()   { echo "[WARN]  $*"; }
+log_error()  { echo "[ERROR] $*"; }
+log_section(){ echo -e "\n========== $* ==========\n"; }
+
+trap 'log_error "Installer exited unexpectedly at line $LINENO"' ERR
+
+log "Logging initialized"
+log "Log file: $LOG_FILE"
 
 ############################################
 # TIMEZONE
