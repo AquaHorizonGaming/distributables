@@ -7,8 +7,8 @@
 ## ▶️ How to run the installer (Ubuntu Script)
 
 Run this command on Ubuntu:
-``` bash
-    sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
 ```
 
 <a id="installer"></a># 🔁 Riven Ubuntu Installer
@@ -172,7 +172,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/d
 ### ▶️ Run this command on Ubuntu
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/riven-update.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/riven-updater.sh)"
 ```
 
 This command updates **Riven** to the latest available Docker images and optionally updates the configured **media server**.
