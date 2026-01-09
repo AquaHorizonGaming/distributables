@@ -1,92 +1,133 @@
 ## ▶️ How to run the installer (Ubuntu Script)
 
-```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
+Run this command on Ubuntu:
+``` bash
+    sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/install.sh)"
 ```
+
 # Riven Ubuntu Installer
 
-This script installs and configures Riven on Ubuntu using Docker and Docker Compose.
+This installer deploys **Riven** on Ubuntu using Docker and Docker Compose with a fully interactive guided setup.
 
-SUPPORTED SYSTEMS
+---
+
+## SUPPORTED SYSTEMS
+
 - Ubuntu Server
 - Ubuntu Desktop
 - Virtual Machines
 - Headless servers
 - Advanced WSL setups
 
+---
+
 ## WHAT THIS SCRIPT DOES
 
-SYSTEM & DOCKER
+### SYSTEM & DOCKER
 - Installs Docker and Docker Compose ONLY if missing
 - Configures Docker to use IPv4 only (IPv6 disabled inside Docker only)
-- Sets reliable DNS for containers
+- Sets reliable DNS defaults for containers
 
-FILESYSTEM & MOUNTS
-Creates the following directories:
-- /opt/riven
-  - docker-compose.yml
-  - .env
-- /mnt/riven/backend
-  - Riven backend data
-  - settings.json configuration
-- /mnt/riven/mount
-  - ALL movies, TV shows, and anime live here
+---
 
-Sets up a systemd service to ensure /mnt/riven/mount is bind-mounted as rshared.
-This is REQUIRED for Riven to function.
+### FILESYSTEM & MOUNTS
 
-RIVEN DEPLOYMENT
-- Downloads docker-compose.yml automatically
-- Generates a secure .env file
-- Pulls and starts all containers
-- Retries containers that fail to start (especially frontend)
-- Verifies containers are running
+Creates and manages the following paths:
 
-REQUIRED CONFIGURATION (DO NOT SKIP)
+    /opt/riven
+     ├─ docker-compose.yml
+     └─ .env
 
-AFTER INSTALL YOU MUST EDIT:
-- /mnt/riven/backend/settings.json
+    /mnt/riven/backend
+     ├─ Riven backend data
+     └─ settings.json (auto-generated)
 
-YOU MUST:
-- Add at least ONE scraper
-- Configure at least ONE media server (Plex, Jellyfin, or Emby)
+    /mnt/riven/mount
+     └─ Media library (movies, TV, anime)
 
-IF YOU DO NOT DO THIS:
-- Containers WILL appear healthy
-- NO content will load
-- Scraping will silently fail
+- Configures a systemd mount service
+- Ensures /mnt/riven/mount is bind-mounted as rshared
+- This behavior is REQUIRED for Riven to function
 
-RIVEN WILL NOT WORK UNTIL THIS IS CONFIGURED.
+---
 
-ACCESSING THE FRONTEND
+## RIVEN DEPLOYMENT (AUTOMATED)
 
-After installation completes, the script will print:
-- http://<SERVER_IP>:3000
+The installer performs a fully interactive configuration.
 
-IMPORTANT PATHS SUMMARY
+### DURING INSTALL YOU WILL BE PROMPTED TO:
+- Select a Downloader (e.g. Real-Debrid)
+- Select a Scraper
+- Select a Media Server:
+  - Plex
+  - Jellyfin
+  - Emby
+- Enter required API keys / tokens
 
-Docker Compose:
-- /opt/riven/docker-compose.yml
+### THE SCRIPT WILL:
+- Auto-generate settings.json
+- Generate a secure .env file
+- Download docker-compose.yml
+- Pull all containers
+- Start containers with retry logic
+- Verify all services are running
 
-Environment file:
-- /opt/riven/.env
+NO manual configuration is required after install.
 
-Backend configuration:
-- /mnt/riven/backend/settings.json
+---
 
-Media library location:
-- /mnt/riven/mount
+## IMPORTANT CHANGE
 
-TROUBLESHOOTING
+OLD BEHAVIOR:
+- Manual editing of /mnt/riven/backend/settings.json was required
+
+NEW BEHAVIOR:
+- All configuration is handled during the installer
+- Riven starts fully configured
+- Scraping and media integration work immediately
+
+---
+
+## ACCESSING THE FRONTEND
+
+After installation completes, the script prints:
+
+    http://<SERVER_IP>:3000
+
+---
+
+## IMPORTANT PATHS
+
+- Docker Compose: /opt/riven/docker-compose.yml
+- Environment file: /opt/riven/.env
+- Backend config: /mnt/riven/backend/settings.json
+- Media library: /mnt/riven/mount
+
+---
+
+## TROUBLESHOOTING
 
 Check running containers:
-- docker ps
+
+    docker ps
 
 Restart everything:
-- cd /opt/riven
-- docker compose down
-- docker compose up -d
+
+    cd /opt/riven
+    docker compose down
+    docker compose up -d
 
 View backend logs:
-- docker logs riven
+
+    docker logs riven
+
+---
+
+## INSTALL COMPLETE
+
+If containers are running and no errors are shown:
+- Riven is installed
+- Media servers are connected
+- Scraping is active
+- No further setup is required
 
