@@ -172,7 +172,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/d
 ### ▶️ Run this command on Ubuntu
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/riven-updater.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/AquaHorizonGaming/distributables/main/ubuntu/riven-update.sh)"
 ```
 
 This command updates **Riven** to the latest available Docker images and optionally updates the configured **media server**.
