@@ -150,23 +150,12 @@ banner "Docker"
 if command -v docker >/dev/null 2>&1; then
   ok "Docker already installed"
 else
-  echo "[*] Installing Docker"
-
-  systemctl stop unattended-upgrades >/dev/null 2>&1 || true
-
-  apt-get update || fail "apt update failed"
-
-  # Install containerd FIRST (safe)
-  apt-get install -y containerd || fail "containerd install failed"
-
-  # Install docker WITHOUT recommends (prevents dnsmasq/ubuntu-fan)
-  apt-get install -y --no-install-recommends \
-    docker.io docker-compose-plugin \
-    || fail "Docker install failed"
-
-  systemctl enable --now docker || fail "Docker service failed"
+  echo "[*] Installing Docker — this may take several minutes depending on your connection..."
+  curl -fsSL https://get.docker.com | sh
+  systemctl enable --now docker
   ok "Docker installed"
 fi
+
 
 ############################################
 # USER / UID / GID DETECTION
