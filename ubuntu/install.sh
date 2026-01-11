@@ -147,33 +147,26 @@ dpkg -s ca-certificates curl gnupg lsb-release openssl fuse3 >/dev/null 2>&1 \
 ############################################
 banner "Docker"
 
-# Wait for any existing apt locks
-while fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
-   || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-  echo "[*] Waiting for apt lock..."
-  sleep 3
-done
-
 if command -v docker >/dev/null 2>&1; then
   ok "Docker already installed"
 else
-  echo "[*] Installing Docker (this can take a few minutes)..."
+  echo "[*] Installing Docker"
 
-  # Stop unattended upgrades to prevent deadlock
   systemctl stop unattended-upgrades >/dev/null 2>&1 || true
 
-  apt-get update -y || fail "apt update failed"
+  apt-get update || fail "apt update failed"
 
-  # Disable dpkg TTY + hard timeout
-  timeout 600 apt-get install -y \
-    -o Dpkg::Use-Pty=0 \
+  # Install containerd FIRST (safe)
+  apt-get install -y containerd || fail "containerd install failed"
+
+  # Install docker WITHOUT recommends (prevents dnsmasq/ubuntu-fan)
+  apt-get install -y --no-install-recommends \
     docker.io docker-compose-plugin \
-    || fail "Docker install failed or timed out"
+    || fail "Docker install failed"
 
   systemctl enable --now docker || fail "Docker service failed"
   ok "Docker installed"
 fi
-
 
 ############################################
 # USER / UID / GID DETECTION
