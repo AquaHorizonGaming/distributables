@@ -132,8 +132,15 @@ ok "Timezone set: $TZ_SELECTED"
 # SYSTEM DEPS
 ############################################
 banner "System Dependencies"
-apt-get update
-apt-get install -y ca-certificates curl gnupg lsb-release openssl fuse3
+
+dpkg -s ca-certificates curl gnupg lsb-release openssl fuse3 >/dev/null 2>&1 \
+  && ok "System dependencies already installed" \
+  || {
+    apt-get update || fail "apt update failed"
+    apt-get install -y ca-certificates curl gnupg lsb-release openssl fuse3 \
+      || fail "dependency install failed"
+    ok "System dependencies installed"
+  }
 
 ############################################
 # DOCKER
