@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+INSTALL_VERSION="2026-01-11-docker-group"
+echo "Installer version: $INSTALL_VERSION"
+
 ############################################
 # CONSTANTS
 ############################################
