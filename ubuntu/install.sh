@@ -14,7 +14,7 @@ RIVEN_COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distribut
 
 DEFAULT_ORIGIN="http://localhost:3000"
 
-INSTALL_VERSION="v0.5.7"
+INSTALL_VERSION="v0.5.8"
 
 ############################################
 # HELPERS
@@ -290,6 +290,8 @@ setup_docker_group() {
     warn "Log out and back in for Docker permissions to apply"
   fi
 }
+
+setup_docker_group
 
 ############################################
 # FILESYSTEM
@@ -648,7 +650,11 @@ AUTH_SECRET="$(openssl rand -base64 32)"
 # ------------------------------------------
 # PART 1: Generate API key
 # ------------------------------------------
+# Generate backend API key safely under pipefail
+set +o pipefail
 BACKEND_API_KEY="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+set -o pipefail
+
 
 # ------------------------------------------
 # PART 2: Validate using Riven's logic
@@ -875,8 +881,8 @@ echo "  • AUTH SECRET:      $AUTH_SECRET"
 
 
 echo "🐳 Docker"
-echo "  • Media Compose:      $INSTALL_DIRdocker-compose.media.yml"
-echo "  • Riven Compose:      $INSTALL_DIRdocker-compose.yml"
+echo "  • Media Compose:      $INSTALL_DIR/docker-compose.media.yml"
+echo "  • Riven Compose:      $INSTALL_DIR/docker-compose.yml"
 echo "  • Media Profile:      $MEDIA_PROFILE"
 echo
 
