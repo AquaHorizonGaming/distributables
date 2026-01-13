@@ -18,7 +18,7 @@ DEFAULT_MOUNT="/mnt/riven/mount"
 UNMOUNT_RETRIES=5
 WAIT_BETWEEN=2
 REMOUNT_WAIT=5
-VERSION=1.0
+VERSION=1.2
 
 ############################################
 # OUTPUT HELPERS
@@ -91,7 +91,12 @@ for attempt in $(seq 1 $UNMOUNT_RETRIES); do
   fi
 
   warn "Unmount attempt $attempt"
-  umount "$MOUNT_PATH" || true
+
+  if umount "$MOUNT_PATH" 2>&1 | grep -q "not mounted"; then
+    ok "Mount was already unmounted"
+    break
+  fi
+
   sleep "$WAIT_BETWEEN"
 
   if ! is_mounted; then
@@ -99,10 +104,6 @@ for attempt in $(seq 1 $UNMOUNT_RETRIES); do
     break
   fi
 done
-
-if is_mounted; then
-  fail "Mount still present after retries"
-fi
 
 ############################################
 # REMOUNT (BIND + RSHARED)
