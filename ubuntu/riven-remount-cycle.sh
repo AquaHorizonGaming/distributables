@@ -18,7 +18,7 @@ DEFAULT_MOUNT="/mnt/riven/mount"
 UNMOUNT_RETRIES=5
 WAIT_BETWEEN=2
 REMOUNT_WAIT=5
-VERSION=1.2
+VERSION=1.3
 
 ############################################
 # OUTPUT HELPERS
