@@ -40,6 +40,7 @@ show_version() {
   ok "Version: v$VERSION"
 }
 
+show_version
 
 ############################################
 # MOUNT PATH PROMPT
@@ -50,34 +51,80 @@ MOUNT_PATH="${MOUNT_PATH:-$DEFAULT_MOUNT}"
 ok "Using mount path: $MOUNT_PATH"
 
 ############################################
+# MEDIA RUNTIME SELECTION
+############################################
+section "Media Server Runtime"
+echo "1) Docker"
+echo "2) Systemd service"
+read -rp "Choice [1-2]: " MEDIA_RUNTIME
+
+case "$MEDIA_RUNTIME" in
+  1)
+    MEDIA_MODE="docker"
+    ok "Media server will be controlled via Docker"
+    ;;
+  2)
+    MEDIA_MODE="systemd"
+    ok "Media server will be controlled via systemd"
+    ;;
+  *)
+    fail "Invalid runtime selection"
+    ;;
+esac
+
+############################################
 # MEDIA SERVER SELECTION
 ############################################
 section "Media Server Selection"
 echo "1) Plex"
 echo "2) Jellyfin"
 echo "3) Emby"
-echo "4) Custom container name"
+echo "4) Custom name"
 read -rp "Choice [1-4]: " MEDIA_CHOICE
 
 case "$MEDIA_CHOICE" in
-  1) MEDIA_CONTAINER="plex" ;;
-  2) MEDIA_CONTAINER="jellyfin" ;;
-  3) MEDIA_CONTAINER="emby" ;;
-  4) read -rp "Container name: " MEDIA_CONTAINER ;;
+  1) MEDIA_NAME="plex" ;;
+  2) MEDIA_NAME="jellyfin" ;;
+  3) MEDIA_NAME="emby" ;;
+  4) read -rp "Enter media name: " MEDIA_NAME ;;
   *) fail "Invalid selection" ;;
 esac
 
-ok "Using media container: $MEDIA_CONTAINER"
+ok "Selected media server: $MEDIA_NAME"
 
 ############################################
-# STOP CONTAINERS
+# MEDIA TARGET RESOLUTION
 ############################################
-section "Stopping Containers"
+if [[ "$MEDIA_MODE" == "docker" ]]; then
+  MEDIA_CONTAINER="$MEDIA_NAME"
+  ok "Using Docker container: $MEDIA_CONTAINER"
+else
+  case "$MEDIA_NAME" in
+    plex)     MEDIA_SERVICE="plexmediaserver" ;;
+    jellyfin) MEDIA_SERVICE="jellyfin" ;;
+    emby)     MEDIA_SERVICE="emby-server" ;;
+    *)
+      read -rp "Enter systemd service name: " MEDIA_SERVICE
+      ;;
+  esac
+  ok "Using systemd service: $MEDIA_SERVICE"
+fi
+
+############################################
+# STOP SERVICES
+############################################
+section "Stopping Services"
+
 docker stop "$RIVEN_CONTAINER" >/dev/null 2>&1 || true
-ok "Riven stopped"
+ok "Riven container stopped"
 
-docker stop "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
-ok "Media server stopped"
+if [[ "$MEDIA_MODE" == "docker" ]]; then
+  docker stop "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
+  ok "Media container stopped"
+else
+  systemctl stop "$MEDIA_SERVICE"
+  ok "Media service stopped"
+fi
 
 ############################################
 # UNMOUNT
@@ -131,19 +178,26 @@ fi
 ok "Propagation verified: $PROP"
 
 ############################################
-# START CONTAINERS
+# START SERVICES
 ############################################
-section "Starting Containers"
+section "Starting Services"
 
 docker start "$RIVEN_CONTAINER" >/dev/null
-ok "Riven started"
+ok "Riven container started"
 
-docker start "$MEDIA_CONTAINER" >/dev/null
-ok "Media server started"
-
-sleep 5
-docker restart "$MEDIA_CONTAINER" >/dev/null
-ok "Media server restarted (post-mount)"
+if [[ "$MEDIA_MODE" == "docker" ]]; then
+  docker start "$MEDIA_CONTAINER" >/dev/null
+  ok "Media container started"
+  sleep 5
+  docker restart "$MEDIA_CONTAINER" >/dev/null
+  ok "Media container restarted (post-mount)"
+else
+  systemctl start "$MEDIA_SERVICE"
+  ok "Media service started"
+  sleep 5
+  systemctl restart "$MEDIA_SERVICE"
+  ok "Media service restarted (post-mount)"
+fi
 
 ############################################
 # DONE
