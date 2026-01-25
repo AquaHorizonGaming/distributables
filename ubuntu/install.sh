@@ -14,7 +14,7 @@ RIVEN_COMPOSE_URL="https://raw.githubusercontent.com/AquaHorizonGaming/distribut
 
 DEFAULT_ORIGIN="http://localhost:3000"
 
-INSTALL_VERSION="v0.6"
+INSTALL_VERSION="v0.6.7"
 
 ############################################
 # HELPERS
@@ -730,6 +730,77 @@ case "$MEDIA_PROFILE" in
     ;;
 esac
 
+############################################
+# VALIDATION SUMMARY (CONFIRM BEFORE CONTINUE)
+############################################
+banner "Configuration Summary"
+
+echo "Please review your configuration below:"
+echo ""
+
+echo "🕒 Timezone"
+echo "  • $TZ_SELECTED"
+echo ""
+
+echo "🌍 Frontend Origin"
+echo "  • $ORIGIN"
+echo ""
+
+echo "🎬 Media Server"
+echo "  • Selected: $MEDIA_PROFILE"
+echo "  • URL: http://$SERVER_IP:$MEDIA_PORT"
+echo ""
+
+echo "⬇️ Downloader"
+if [[ "$RIVEN_DOWNLOADERS_REAL_DEBRID_ENABLED" == "true" ]]; then
+  echo "  • Real-Debrid"
+elif [[ "$RIVEN_DOWNLOADERS_ALL_DEBRID_ENABLED" == "true" ]]; then
+  echo "  • All-Debrid"
+elif [[ "$RIVEN_DOWNLOADERS_DEBRID_LINK_ENABLED" == "true" ]]; then
+  echo "  • Debrid-Link"
+else
+  echo "  • NONE (invalid)"
+fi
+echo ""
+
+echo "🔍 Scrapers Enabled"
+SCRAPER_COUNT=0
+
+[[ "$RIVEN_SCRAPING_TORRENTIO_ENABLED" == "true" ]] && { echo "  • Torrentio"; ((SCRAPER_COUNT++)); }
+[[ "$RIVEN_SCRAPING_PROWLARR_ENABLED" == "true"  ]] && { echo "  • Prowlarr ($RIVEN_SCRAPING_PROWLARR_URL)"; ((SCRAPER_COUNT++)); }
+[[ "$RIVEN_SCRAPING_COMET_ENABLED" == "true"     ]] && { echo "  • Comet ($RIVEN_SCRAPING_COMET_URL)"; ((SCRAPER_COUNT++)); }
+[[ "$RIVEN_SCRAPING_JACKETT_ENABLED" == "true"   ]] && { echo "  • Jackett ($RIVEN_SCRAPING_JACKETT_URL)"; ((SCRAPER_COUNT++)); }
+[[ "$RIVEN_SCRAPING_ZILEAN_ENABLED" == "true"    ]] && { echo "  • Zilean ($RIVEN_SCRAPING_ZILEAN_URL)"; ((SCRAPER_COUNT++)); }
+
+if [[ "$SCRAPER_COUNT" -eq 0 ]]; then
+  echo "  • NONE (invalid)"
+fi
+echo ""
+
+echo "📁 Paths"
+echo "  • Install Dir:  $INSTALL_DIR"
+echo "  • Backend Path: $BACKEND_PATH"
+echo "  • Mount Path:   $MOUNT_PATH"
+echo ""
+
+echo "👤 Ownership"
+echo "  • UID:GID $TARGET_UID:$TARGET_GID"
+echo ""
+
+echo "⚠️  IMPORTANT"
+echo "  • This will write configuration files"
+echo "  • Docker containers will be started"
+echo "  • Secrets will be generated automatically"
+echo ""
+
+read -rp "Continue with this configuration? [y/N]: " CONFIRM
+if [[ ! "${CONFIRM,,}" =~ ^y$ ]]; then
+  echo ""
+  echo "Installation aborted by user."
+  exit 1
+fi
+
+ok "Configuration confirmed"
 
 ############################################
 # WRITE .env (ONCE, NO SED)
