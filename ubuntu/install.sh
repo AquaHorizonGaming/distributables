@@ -30,25 +30,6 @@ ok()   { printf "✔  %s\n" "$1"; }
 warn() { printf "⚠  %s\n" "$1"; }
 fail() { printf "✖  %s\n" "$1"; exit 1; }
 
-debug() {
-  [[ "$DEBUG_MODE" == "true" ]] || return 0
-  local source_name="${BASH_SOURCE[1]##*/}"
-  local line_no="${BASH_LINENO[0]:-0}"
-  local func_name="${FUNCNAME[1]:-main}"
-  printf "[DEBUG][%s:%s][%s] %s\n" "$source_name" "$line_no" "$func_name" "$*"
-}
-
-debug_rc() {
-  local rc="$1"
-  shift || true
-  debug "exit_code=${rc} command=$*"
-  return "$rc"
-}
-
-debug_step() {
-  debug "step=$*"
-}
-
 # Capture whether the original stdout is a terminal before logging redirection.
 exec 3>&1
 ORIGINAL_STDOUT_IS_TTY=false
@@ -56,21 +37,14 @@ ORIGINAL_STDOUT_IS_TTY=false
 
 run_docker_compose_up_detached() {
   local -a compose_cmd=("$@")
-  local rc=0
-
-  debug_step "docker compose up -d --pull always"
-  debug "compose_cmd=${compose_cmd[*]}"
 
   if [[ "$ORIGINAL_STDOUT_IS_TTY" == "true" ]]; then
     # Preserve TTY behavior so pull progress updates in-place.
-    "${compose_cmd[@]}" up -d --pull always 1>&3 2>&3 || rc=$?
+    "${compose_cmd[@]}" up -d --pull always 1>&3 2>&3
   else
     # Keep normal output in CI / non-interactive shells.
-    "${compose_cmd[@]}" up -d --pull always || rc=$?
+    "${compose_cmd[@]}" up -d --pull always
   fi
-
-  debug_rc "$rc" "${compose_cmd[*]} up -d --pull always"
-  return "$rc"
 }
 
 ############################################
