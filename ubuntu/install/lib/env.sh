@@ -7,7 +7,7 @@ init_installer_state() {
   LOG_DIR='/tmp/logs/riven'
 
   DEFAULT_ORIGIN='http://localhost:3000'
-  INSTALL_VERSION='v0.6'
+  INSTALL_VERSION='v1'
 
   COMPOSE_BASE_URL="${BASE_URL%/install}"
   MEDIA_COMPOSE_URL="$COMPOSE_BASE_URL/docker-compose.media.yml"
